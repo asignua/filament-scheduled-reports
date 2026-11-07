@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentScheduledReports\Tests\Feature;
 
+use Asignua\FilamentScheduledReports\Enums\RunStatus;
 use Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\Pages\EditScheduledReport;
 use Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\RelationManagers\RunsRelationManager;
 use Asignua\FilamentScheduledReports\Mail\ProblemMail;
@@ -78,6 +79,22 @@ class ReadableTextTest extends TestCase
 
         Livewire::test(RunsRelationManager::class, ['ownerRecord' => $report, 'pageClass' => EditScheduledReport::class])
             ->assertTableColumnStateSet('reason', Reasons::text('target_gone:filter:region'), $paused);
+    }
+
+    public function test_the_skipped_badge_names_the_real_reason_in_every_locale(): void
+    {
+        $report = $this->makeReport();
+        $paused = $report->runs()->create(['status' => RunStatus::Skipped, 'manual' => false, 'warnings' => [], 'reason' => 'skipped:paused_by_manager']);
+        $empty = $report->runs()->create(['status' => RunStatus::Skipped, 'manual' => false, 'warnings' => []]);
+
+        foreach (['en', 'uk', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'pt_BR', 'tr'] as $locale) {
+            app()->setLocale($locale);
+
+            $this->assertNotSame('skipped:paused_by_manager', Reasons::text('skipped:paused_by_manager'));
+            $table = Livewire::test(RunsRelationManager::class, ['ownerRecord' => $report, 'pageClass' => EditScheduledReport::class]);
+            $table->assertTableColumnStateSet('status', Reasons::text('skipped:paused_by_manager'), $paused);
+            $table->assertTableColumnStateSet('status', RunStatus::Skipped->label(), $empty);
+        }
     }
 
     public function test_the_pause_mail_says_why_in_words(): void

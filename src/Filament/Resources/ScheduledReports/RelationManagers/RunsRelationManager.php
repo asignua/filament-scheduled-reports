@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\RelationManagers;
 
+use Asignua\FilamentScheduledReports\Enums\RunStatus;
 use Asignua\FilamentScheduledReports\Models\ScheduledReportRun;
 use Asignua\FilamentScheduledReports\Support\Reasons;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -40,7 +41,7 @@ class RunsRelationManager extends RelationManager
                 TextColumn::make('status')
                     ->label(__($lang.'status'))
                     ->badge()
-                    ->state(fn (ScheduledReportRun $record): string => $record->status->label().($record->manual ? ' ('.__($lang.'manual').')' : ''))
+                    ->state(fn (ScheduledReportRun $record): string => ($record->status === RunStatus::Skipped && str_starts_with((string) $record->reason, 'skipped:') ? Reasons::text((string) $record->reason) : $record->status->label()).($record->manual ? ' ('.__($lang.'manual').')' : ''))
                     ->color(fn (ScheduledReportRun $record): string => $record->status->color()),
                 TextColumn::make('rows')->label(__($lang.'rows'))->numeric()->alignEnd()->placeholder('—'),
                 TextColumn::make('size_bytes')->label(__($lang.'size'))->alignEnd()->placeholder('—')

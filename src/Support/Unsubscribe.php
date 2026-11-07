@@ -70,7 +70,8 @@ final class Unsubscribe
 
             $report->recipients = $kept;
 
-            if ($kept === []) {
+            // A manager's pause binds: the owner must not be able to undo it by emptying the list and re-adding themselves.
+            if ($kept === [] && !$report->isLockedByManager()) {
                 $report->status = ReportStatus::Paused;
                 $report->paused_reason = PauseReason::NoRecipients;
                 $report->next_run_at = null;

@@ -49,6 +49,19 @@ class UnsubscribeTest extends TestCase
         $this->assertCount(1, $report->refresh()->recipients);
     }
 
+    public function test_the_last_recipient_leaving_keeps_a_manager_pause(): void
+    {
+        $report = $this->makeReport();
+        $report->update(['status' => ReportStatus::Paused, 'paused_reason' => PauseReason::ManagerPaused, 'next_run_at' => null]);
+
+        $this->post(Unsubscribe::url($report, 'u-'.auth()->id()))->assertOk();
+
+        $report->refresh();
+        $this->assertSame([], $report->recipients);
+        $this->assertSame(PauseReason::ManagerPaused, $report->paused_reason);
+        $this->assertTrue($report->isLockedByManager());
+    }
+
     public function test_the_last_recipient_leaving_pauses_the_report(): void
     {
         $report = $this->makeReport();
