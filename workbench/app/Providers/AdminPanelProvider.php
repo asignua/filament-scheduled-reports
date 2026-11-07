@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Workbench\App\Providers;
 
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Workbench\App\Models\User;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -30,7 +32,11 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->databaseNotifications()
             ->resources([OrderResource::class])
-            ->plugin(ScheduledReportsPlugin::make())
+            ->plugin(
+                ScheduledReportsPlugin::make()
+                    // Colleagues the owner may pick: every active user (a real app would narrow this to a team).
+                    ->recipients(fn (Authenticatable $owner): array => User::query()->where('is_active', true)->whereKeyNot($owner->getAuthIdentifier())->pluck('name', 'id')->all())
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

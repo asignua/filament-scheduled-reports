@@ -25,6 +25,6 @@ class SmokeTest extends TestCase
 
     public function test_the_translations_are_loaded(): void
     {
-        $this->assertSame('Sample', __('filament-scheduled-reports::filament-scheduled-reports.sample'));
+        $this->assertSame('Scheduled reports', __('filament-scheduled-reports::filament-scheduled-reports.plural'));
     }
 }

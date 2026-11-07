@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workbench\App\Filament\Resources\Orders\Pages;
 
+use Asignua\FilamentScheduledReports\Actions\ScheduleReportAction;
 use Filament\Resources\Pages\ListRecords;
 use Workbench\App\Filament\Resources\Orders\OrderResource;
 
@@ -13,6 +14,6 @@ class ListOrders extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [OrderResource::exportAction()];
+        return [OrderResource::exportAction(), ScheduleReportAction::make()];
     }
 }
