@@ -15,6 +15,8 @@ use Workbench\Database\Factories\UserFactory;
  * @property string $name
  * @property string $email
  * @property bool $is_active
+ * @property string|null $timezone
+ * @property string|null $locale
  */
 class User extends Authenticatable implements FilamentUser
 {
