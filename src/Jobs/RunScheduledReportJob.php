@@ -27,10 +27,14 @@ final class RunScheduledReportJob implements ShouldQueue
 
     public function __construct(public readonly int $reportId, public readonly int $runId)
     {
-        $this->timeout = max(30, (int) config('filament-scheduled-reports.timeout', 600));
-
         $connection = config('filament-scheduled-reports.run_connection');
         $queue = config('filament-scheduled-reports.run_queue');
+        $timeout = max(30, (int) config('filament-scheduled-reports.timeout', 600));
+        $retryAfter = config('queue.connections.'.(is_string($connection) ? $connection : config('queue.default')).'.retry_after');
+
+        // With one try, a job that outlives the connection's `retry_after` is handed to a second worker and the
+        // report goes out twice: the worker must kill it first.
+        $this->timeout = is_numeric($retryAfter) ? max(10, min($timeout, (int) $retryAfter - 10)) : $timeout;
 
         if (is_string($connection)) {
             $this->onConnection($connection);

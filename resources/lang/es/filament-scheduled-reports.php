@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => '¿Dejar de recibir este informe programado?',
     'unsubscribe_button' => 'Darse de baja',
     'unsubscribe_done' => 'Hecho. Ya no recibirá este informe.',
+    'limit_reached' => 'Límite alcanzado: este informe superaría el número permitido de informes o destinatarios. Elimine un informe o quite un destinatario.',
+    'pause_manager_paused' => 'pausado por un gerente',
+    'pause_scope_hook_missing' => 'el panel exige un hook de alcance de datos y no hay ninguno',
 ];

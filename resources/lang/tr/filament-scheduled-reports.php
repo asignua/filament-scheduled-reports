@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Bu zamanlanmış raporu almayı bırakmak istiyor musunuz?',
     'unsubscribe_button' => 'Abonelikten çık',
     'unsubscribe_done' => 'Tamam. Artık bu raporu almayacaksınız.',
+    'limit_reached' => 'Sınıra ulaşıldı: bu rapor izin verilen rapor veya alıcı sayısını aşardı. Bir raporu silin veya bir alıcıyı kaldırın.',
+    'pause_manager_paused' => 'bir yönetici tarafından duraklatıldı',
+    'pause_scope_hook_missing' => 'panel bir veri kapsamı kancası gerektiriyor ve hiçbiri ayarlanmamış',
 ];

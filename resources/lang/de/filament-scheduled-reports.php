@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Diesen geplanten Bericht nicht mehr erhalten?',
     'unsubscribe_button' => 'Abbestellen',
     'unsubscribe_done' => 'Erledigt. Sie erhalten diesen Bericht nicht mehr.',
+    'limit_reached' => 'Limit erreicht: Dieser Bericht würde die erlaubte Anzahl an Berichten oder Empfängern überschreiten. Löschen Sie einen Bericht oder entfernen Sie einen Empfänger.',
+    'pause_manager_paused' => 'von einem Manager pausiert',
+    'pause_scope_hook_missing' => 'das Panel verlangt einen Datenbereich-Hook, und es ist keiner gesetzt',
 ];

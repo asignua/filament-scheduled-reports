@@ -10,6 +10,7 @@ use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
 use Asignua\FilamentScheduledReports\Support\Access;
 use Asignua\FilamentScheduledReports\Support\ExportForm;
+use Asignua\FilamentScheduledReports\Support\Limits;
 use Asignua\FilamentScheduledReports\Support\ReportState;
 use Asignua\FilamentScheduledReports\Support\ScheduleFields;
 use Asignua\FilamentScheduledReports\Support\Scheduler;
@@ -87,9 +88,15 @@ class ScheduleReportAction extends Action
             return false;
         }
 
+        $plugin = ScheduledReportsPlugin::forPanel($panel);
+
+        if (!$plugin->scopeHookSatisfied()) {
+            return false;
+        }
+
         $export = ExportForm::action($livewire, $this->exportActionName);
 
-        return $export !== null && (!method_exists($export, 'isVisible') || $export->isVisible());
+        return $export !== null && ExportForm::usable($export);
     }
 
     private function user(?\Filament\Panel $panel = null): ?Authenticatable
@@ -169,11 +176,20 @@ class ScheduleReportAction extends Action
         $plugin = ScheduledReportsPlugin::forPanel($panel);
 
         // The button was visible when the modal opened; the request that submits it is checked again.
-        abort_unless($panel !== null && $user !== null && $plugin !== null && $livewire instanceof Page && !$panel->hasTenancy() && Access::canSchedule($user, $livewire::class), 403);
+        abort_unless($panel !== null && $user !== null && $plugin !== null && $livewire instanceof Page && !$panel->hasTenancy() && $plugin->scopeHookSatisfied() && Access::canSchedule($user, $livewire::class), 403);
+
+        $export = ExportForm::action($livewire, $this->exportActionName);
+        abort_unless($export !== null && ExportForm::usable($export), 403);
 
         $recipients = ScheduleFields::recipientsFrom($data, $plugin, $user);
 
         abort_if($recipients === [], 422);
+
+        if (Limits::tooManyRecipients(count($recipients)) || Limits::reportsReached($panel->getAuthGuard(), (string) $user->getAuthIdentifier())) {
+            Notification::make()->danger()->title(__('filament-scheduled-reports::filament-scheduled-reports.limit_reached'))->send();
+
+            return;
+        }
 
         $frequency = Frequency::from((string) $data['frequency']);
         $days = $frequency === Frequency::Weekly ? array_values(array_map('intval', (array) ($data['days'] ?? []))) : null;
@@ -191,7 +207,7 @@ class ScheduleReportAction extends Action
             'day_of_month' => $frequency === Frequency::Monthly ? (int) $data['day_of_month'] : null,
             'timezone' => (string) $data['timezone'],
             'locale' => app()->getLocale(),
-            'url_root' => request()->root(),
+            'url_root' => self::rootFor($panel, $plugin),
             'state' => [...ReportState::capture($livewire), 'export' => is_array($data['export'] ?? null) ? $data['export'] : []],
             'summary' => ReportState::summary($livewire),
             'recipients' => $recipients,
@@ -208,5 +224,26 @@ class ScheduleReportAction extends Action
                 'when' => $report->nextRunAt()?->setTimezone($report->timezone)->isoFormat('LLLL').' ('.$report->timezone.')',
             ]))
             ->send();
+    }
+
+    /**
+     * The root the worker builds links on. The request's Host is client-controlled, so it is trusted only when it is
+     * one of the panel's own configured domains; otherwise `app.url` (or the host's `urlRoot()`).
+     */
+    private static function rootFor(\Filament\Panel $panel, ScheduledReportsPlugin $plugin): string
+    {
+        $configured = $plugin->getUrlRoot();
+
+        if ($configured !== null && $configured !== '') {
+            return $configured;
+        }
+
+        $domains = $panel->getDomains();
+
+        if ($domains !== [] && in_array(request()->getHost(), $domains, true)) {
+            return request()->root();
+        }
+
+        return rtrim((string) config('app.url'), '/');
     }
 }

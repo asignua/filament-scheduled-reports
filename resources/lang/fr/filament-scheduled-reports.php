@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Ne plus recevoir ce rapport planifié ?',
     'unsubscribe_button' => 'Se désabonner',
     'unsubscribe_done' => 'C’est fait. Vous ne recevrez plus ce rapport.',
+    'limit_reached' => 'Limite atteinte : ce rapport dépasserait le nombre de rapports ou de destinataires autorisé. Supprimez un rapport ou retirez un destinataire.',
+    'pause_manager_paused' => 'suspendu par un responsable',
+    'pause_scope_hook_missing' => 'le panneau exige un hook de périmètre de données et aucun n’est défini',
 ];

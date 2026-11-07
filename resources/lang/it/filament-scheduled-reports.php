@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Non ricevere più questo report pianificato?',
     'unsubscribe_button' => 'Annulla l’iscrizione',
     'unsubscribe_done' => 'Fatto. Non riceverai più questo report.',
+    'limit_reached' => 'Limite raggiunto: questo report supererebbe il numero consentito di report o destinatari. Elimina un report o rimuovi un destinatario.',
+    'pause_manager_paused' => 'sospeso da un responsabile',
+    'pause_scope_hook_missing' => 'il pannello richiede un hook di ambito dei dati e non ne è impostato nessuno',
 ];

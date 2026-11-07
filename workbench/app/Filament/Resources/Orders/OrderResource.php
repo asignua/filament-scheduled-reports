@@ -6,6 +6,7 @@ namespace Workbench\App\Filament\Resources\Orders;
 
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Asignua\FilamentXlsxExport\ColumnFormat;
+use Closure;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -39,11 +40,16 @@ class OrderResource extends Resource
             ]);
     }
 
+    /** Tests only: changes the export action (disabled, authorize, ...). */
+    public static ?Closure $exportTweak = null;
+
     public static function exportAction(): XlsxExportAction
     {
-        return XlsxExportAction::make()
+        $action = XlsxExportAction::make()
             ->title('Orders')
             ->columnFormats(['amount' => ColumnFormat::make()->money('$')->sum()->width(14)]);
+
+        return self::$exportTweak === null ? $action : (self::$exportTweak)($action);
     }
 
     public static function getPages(): array

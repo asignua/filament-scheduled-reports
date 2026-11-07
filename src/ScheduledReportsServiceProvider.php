@@ -7,8 +7,11 @@ namespace Asignua\FilamentScheduledReports;
 use Asignua\FilamentScheduledReports\Commands\PruneCommand;
 use Asignua\FilamentScheduledReports\Commands\RunCommand;
 use Asignua\FilamentScheduledReports\Http\UnsubscribeController;
+use Asignua\FilamentScheduledReports\Support\Access;
 use Asignua\FilamentScheduledReports\Support\Unsubscribe;
+use Asignua\FilamentXlsxExport\Support\QueuedExports;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,9 @@ class ScheduledReportsServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->registerUnsubscribeRoutes();
+
+        // A report file is the owner's data: every download re-asks whether the owner may still schedule that page.
+        QueuedExports::checkDownloadsOf('scheduled-reports', static fn (Authenticatable $user, array $data): bool => Access::canDownload($user, $data));
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             if (!(bool) config('filament-scheduled-reports.schedule.enabled', true)) {

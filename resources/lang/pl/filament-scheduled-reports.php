@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Przestać otrzymywać ten zaplanowany raport?',
     'unsubscribe_button' => 'Wypisz się',
     'unsubscribe_done' => 'Gotowe. Nie będziesz już otrzymywać tego raportu.',
+    'limit_reached' => 'Osiągnięto limit: ten raport przekroczyłby dozwoloną liczbę raportów lub odbiorców. Usuń raport lub odbiorcę.',
+    'pause_manager_paused' => 'wstrzymany przez menedżera',
+    'pause_scope_hook_missing' => 'panel wymaga hooka zakresu danych, a żaden nie jest ustawiony',
 ];

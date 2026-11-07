@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Dit geplande rapport niet meer ontvangen?',
     'unsubscribe_button' => 'Uitschrijven',
     'unsubscribe_done' => 'Klaar. U ontvangt dit rapport niet meer.',
+    'limit_reached' => 'Limiet bereikt: dit rapport zou het toegestane aantal rapporten of ontvangers overschrijden. Verwijder een rapport of een ontvanger.',
+    'pause_manager_paused' => 'gepauzeerd door een manager',
+    'pause_scope_hook_missing' => 'het paneel vereist een gegevensbereik-hook en er is er geen ingesteld',
 ];

@@ -19,6 +19,7 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -31,8 +32,8 @@ use Throwable;
 /**
  * Builds and delivers one run, as the report's owner.
  *
- * The rule that shapes everything here: a report never carries more than its owner sees in the panel
- * right now. So the run acts as the owner (guard, panel, locale, `canAccessPanel`), re-checks the gate,
+ * The rule that shapes everything here: a report must not carry more than its owner sees in the panel
+ * right now. The run acts as the owner (guard, panel, locale, `canAccessPanel`), re-checks the gate,
  * the page's own access and the action's visibility, and builds the query on a page component made
  * fresh from stored plain state. If any of that no longer holds the report pauses and no file is made.
  */
@@ -44,6 +45,14 @@ final class ReportRunner
         $run = ScheduledReportRun::query()->find($runId);
 
         if ($report === null || $run === null) {
+            return;
+        }
+
+        // A run can sit in the queue for a while. Whoever paused the report in the meantime meant it to stop:
+        // a scheduled run is dropped once the report is not active, any run once a manager paused it.
+        if ($report->isLockedByManager() || (!$run->manual && !$report->isActive())) {
+            $run->update(['status' => RunStatus::Skipped, 'reason' => $report->isLockedByManager() ? 'skipped:paused_by_manager' : 'skipped:not_active', 'finished_at' => self::stamp()]);
+
             return;
         }
 
@@ -115,13 +124,22 @@ final class ReportRunner
             return;
         }
 
+        if (!$plugin->scopeHookSatisfied()) {
+            self::pause($report, $run, PauseReason::ScopeHookMissing, 'hook', $owner);
+
+            return;
+        }
+
         $page = $report->page;
 
-        if (!class_exists($page) || !is_subclass_of($page, Component::class) || !is_subclass_of($page, HasTable::class)) {
+        if (!class_exists($page) || !is_subclass_of($page, Component::class) || !is_subclass_of($page, HasTable::class) || !Access::pageOnPanel($panel, $page)) {
             self::pause($report, $run, PauseReason::TargetGone, 'page', $owner);
 
             return;
         }
+
+        // The panel's middleware did not run in this worker: the host re-applies the owner's data scope here, before any query.
+        $plugin->runBeforeRun($owner, $panel, $report);
 
         if (method_exists($page, 'canAccess') && !$page::canAccess()) {
             self::pause($report, $run, PauseReason::OwnerLostAccess, 'page');
@@ -154,7 +172,7 @@ final class ReportRunner
             return;
         }
 
-        if (method_exists($action, 'isVisible') && !$action->isVisible()) {
+        if (!ExportForm::usable($action)) {
             self::pause($report, $run, PauseReason::OwnerLostAccess, 'action');
 
             return;
@@ -202,9 +220,16 @@ final class ReportRunner
             }
 
             $id = strtolower((string) Str::ulid());
-            QueuedExports::store($id, $temporary, $result['file_name'], $result['rows'], $payload);
+            // The scope makes the download route ask this plugin before it streams the file, and the time limit
+            // holds even when the export's own retention is "never".
+            QueuedExports::store($id, $temporary, $result['file_name'], $result['rows'], [
+                ...$payload,
+                'scope' => 'scheduled-reports',
+                'scope_data' => ['page' => $report->page, 'panel' => $report->panel],
+                'keep_hours' => max(1, (int) config('filament-scheduled-reports.file_retention_hours', 168)),
+            ]);
         } catch (ExportTooLarge $exception) {
-            self::fail($report, $run, RunStatus::TooLarge, 'too_large:'.$exception->getMessage(), $owner);
+            self::fail($report, $run, RunStatus::TooLarge, 'too_large:'.$exception->count.':'.$exception->limit, $owner);
 
             return;
         } finally {
@@ -251,7 +276,7 @@ final class ReportRunner
         }
 
         foreach ($send as $entry) {
-            $link = $oversize ? QueuedExports::url($id, $report->url_root) : null;
+            $link = $oversize ? QueuedExports::url($id, $report->url_root, max(1, (int) config('filament-scheduled-reports.file_retention_hours', 168))) : null;
 
             Mail::to($entry['email'])->queue(new ReportMail(
                 $report->name,
@@ -361,7 +386,15 @@ final class ReportRunner
             return;
         }
 
-        self::fail($report, $run, RunStatus::Failed, class_basename($exception).': '.$exception->getMessage(), self::owner($report));
+        // The message can carry SQL, hosts and paths: it goes to the log, the history gets the class only.
+        Log::error("filament-scheduled-reports: run {$runId} of report {$reportId} failed: ".$exception->getMessage(), ['exception' => $exception]);
+
+        self::fail($report, $run, RunStatus::Failed, self::reasonFor($exception), self::owner($report));
+    }
+
+    public static function reasonFor(Throwable $exception): string
+    {
+        return 'exception:'.class_basename($exception);
     }
 
     /**

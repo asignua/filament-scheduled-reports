@@ -7,6 +7,7 @@ namespace Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\P
 use Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\ScheduledReportResource;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
+use Asignua\FilamentScheduledReports\Support\Limits;
 use Asignua\FilamentScheduledReports\Support\ScheduleFields;
 use Asignua\FilamentScheduledReports\Support\Scheduler;
 use Filament\Facades\Filament;
@@ -63,7 +64,7 @@ class EditScheduledReport extends EditRecord
         $recipients = ScheduleFields::recipientsFrom($data, $plugin, $user);
 
         // Unknown or forbidden recipients are dropped by `recipientsFrom`; a list that ends up empty is not saved.
-        abort_if($recipients === [], 422);
+        abort_if($recipients === [] || Limits::tooManyRecipients(count($recipients)), 422);
 
         $record->fill([
             'name' => (string) $data['name'],

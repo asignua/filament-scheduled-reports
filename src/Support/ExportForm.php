@@ -23,6 +23,17 @@ final class ExportForm
     }
 
     /**
+     * Whether the export action would be offered to this user right now: visible, not disabled, and authorized
+     * (`->disabled()` and `->authorize()` leave `isVisible()` true).
+     */
+    public static function usable(object $action): bool
+    {
+        return (!method_exists($action, 'isVisible') || $action->isVisible())
+            && (!method_exists($action, 'isDisabled') || !$action->isDisabled())
+            && (!method_exists($action, 'isAuthorized') || $action->isAuthorized());
+    }
+
+    /**
      * @return list<Component>
      */
     public static function components(object $action, Schema $schema): array

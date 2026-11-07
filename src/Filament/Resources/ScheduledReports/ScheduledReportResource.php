@@ -12,6 +12,7 @@ use Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\Relatio
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
 use Asignua\FilamentScheduledReports\Support\Access;
+use Asignua\FilamentScheduledReports\Support\Limits;
 use Asignua\FilamentScheduledReports\Support\Owners;
 use Asignua\FilamentScheduledReports\Support\ScheduleFields;
 use Asignua\FilamentScheduledReports\Support\Scheduler;
@@ -168,7 +169,7 @@ class ScheduledReportResource extends Resource
                     Action::make('runNow')
                         ->label(__($lang.'run_now'))
                         ->icon(Heroicon::OutlinedPlay)
-                        ->visible(fn (ScheduledReport $record): bool => self::owns($record))
+                        ->visible(fn (ScheduledReport $record): bool => self::owns($record) && !$record->isLockedByManager())
                         ->action(function (ScheduledReport $record) use ($lang): void {
                             $run = Scheduler::runNow($record);
 
@@ -181,11 +182,11 @@ class ScheduledReportResource extends Resource
                         ->label(__($lang.'pause'))
                         ->icon(Heroicon::OutlinedPause)
                         ->visible(fn (ScheduledReport $record): bool => $record->isActive() && (self::owns($record) || Access::canManageAll(self::user())))
-                        ->action(fn (ScheduledReport $record) => $record->update(['status' => ReportStatus::Paused, 'paused_reason' => PauseReason::Manual, 'next_run_at' => null])),
+                        ->action(fn (ScheduledReport $record) => $record->update(['status' => ReportStatus::Paused, 'paused_reason' => self::owns($record) ? PauseReason::Manual : PauseReason::ManagerPaused, 'next_run_at' => null])),
                     Action::make('resume')
                         ->label(__($lang.'resume'))
                         ->icon(Heroicon::OutlinedPlayPause)
-                        ->visible(fn (ScheduledReport $record): bool => !$record->isActive() && (self::owns($record) || Access::canManageAll(self::user())))
+                        ->visible(fn (ScheduledReport $record): bool => !$record->isActive() && (Access::canManageAll(self::user()) || (self::owns($record) && !$record->isLockedByManager())))
                         ->action(function (ScheduledReport $record) use ($lang): void {
                             if ($record->recipients === []) {
                                 Notification::make()->warning()->title(__($lang.'resume_no_recipients'))->send();
@@ -202,9 +203,16 @@ class ScheduledReportResource extends Resource
                     Action::make('duplicate')
                         ->label(__($lang.'duplicate'))
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->visible(fn (ScheduledReport $record): bool => self::owns($record))
+                        ->visible(fn (ScheduledReport $record): bool => self::owns($record) && !$record->isLockedByManager())
                         ->action(function (ScheduledReport $record): void {
-                            $copy = $record->replicate(['ulid', 'last_run_at', 'last_manual_run_at', 'consecutive_failures']);
+                            if (Limits::reportsReached($record->guard, $record->owner_id)) {
+                                Notification::make()->danger()->title(__('filament-scheduled-reports::filament-scheduled-reports.limit_reached'))->send();
+
+                                return;
+                            }
+
+                            // `last_manual_run_at` is kept: a copy must not be a way round the "Run now" interval.
+                            $copy = $record->replicate(['ulid', 'last_run_at', 'consecutive_failures']);
                             $copy->ulid = strtolower((string) Str::ulid());
                             $copy->name = $record->name.' ('.__('filament-scheduled-reports::filament-scheduled-reports.copy').')';
                             $copy->status = ReportStatus::Active;

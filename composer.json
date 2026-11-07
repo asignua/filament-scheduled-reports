@@ -1,6 +1,6 @@
 {
     "name": "asignua/filament-scheduled-reports",
-    "description": "Send any Filament table as an .xlsx on a schedule: save the filters, search, sort and columns once, pick a time and recipients, and the report arrives on time, exactly once, as the owner and never with more data than the owner can see.",
+    "description": "Send any Filament table as an .xlsx on a schedule: save the filters, search, sort and columns once, pick a time and recipients, and the report arrives on time, exactly once, as the owner, with the data scope you re-apply for the worker.",
     "keywords": [
         "filament",
         "filament-plugin",

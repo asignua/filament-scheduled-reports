@@ -26,7 +26,7 @@ final class ReportState
     public static function capture(HasTable $livewire): array
     {
         $active = self::read($livewire, 'activeTab');
-        $tab = is_string($active) || is_int($active) ? (string) $active : null;
+        $tab = (is_string($active) || is_int($active)) && (string) $active !== '' ? (string) $active : null;
         $search = self::read($livewire, 'tableSearch');
         $sort = self::read($livewire, 'tableSort');
 
@@ -60,10 +60,12 @@ final class ReportState
 
         $tab = $state['tab'] ?? null;
 
-        if (is_string($tab) && method_exists($component, 'getTabs')) {
-            $tabs = $component->getTabs();
+        if (is_string($tab) && $tab !== '') {
+            // A saved tab that the page no longer offers (or no longer has any tabs at all) means the rows
+            // it selected are gone with it; applying no tab would send everything.
+            $tabs = method_exists($component, 'getTabs') ? $component->getTabs() : [];
 
-            if ($tabs !== [] && !array_key_exists($tab, $tabs)) {
+            if (!array_key_exists($tab, $tabs)) {
                 return 'tab:'.$tab;
             }
         }
@@ -76,7 +78,7 @@ final class ReportState
             'tableSort' => is_string($state['sort'] ?? null) ? $state['sort'] : null,
         ];
 
-        if (is_string($tab) && property_exists($component, 'activeTab')) {
+        if (is_string($tab) && $tab !== '' && property_exists($component, 'activeTab')) {
             $values['activeTab'] = $tab;
         }
 

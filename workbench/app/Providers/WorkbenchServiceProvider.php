@@ -6,6 +6,7 @@ namespace Workbench\App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Workbench\App\Console\UnsubscribeProbe;
 use Workbench\App\Models\User;
 
 /**
@@ -21,6 +22,8 @@ class WorkbenchServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->commands([UnsubscribeProbe::class]);
+
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'workbench');
 
         // Both gates are denied until the application defines them; the workbench lets everybody schedule

@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Deixar de receber este relatório agendado?',
     'unsubscribe_button' => 'Cancelar inscrição',
     'unsubscribe_done' => 'Pronto. Você não receberá mais este relatório.',
+    'limit_reached' => 'Limite atingido: este relatório excederia o número permitido de relatórios ou destinatários. Exclua um relatório ou remova um destinatário.',
+    'pause_manager_paused' => 'pausado por um gerente',
+    'pause_scope_hook_missing' => 'o painel exige um hook de escopo de dados e nenhum foi definido',
 ];

@@ -66,6 +66,7 @@ final class ScheduleFields
                 ->helperText(__($lang.'recipients_hint'))
                 ->multiple()
                 ->options(self::recipientOptions($plugin, $user))
+                ->maxItems(Limits::maxRecipients() ?: null)
                 ->required()
                 ->native(false),
         ];
@@ -74,7 +75,7 @@ final class ScheduleFields
             $fields[] = TagsInput::make('external')
                 ->label(__($lang.'external'))
                 ->helperText(__($lang.'external_hint', ['domains' => implode(', ', $plugin->getAllowedDomains())]))
-                ->rules([static fn (): Closure => self::externalRule($plugin)]);
+                ->rules([static fn (): Closure => self::externalRule($plugin), ...(Limits::maxRecipients() > 0 ? ['max:'.Limits::maxRecipients()] : [])]);
         }
 
         $fields[] = Toggle::make('skip_empty')->label(__($lang.'skip_empty'));

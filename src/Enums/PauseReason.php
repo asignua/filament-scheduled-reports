@@ -36,6 +36,16 @@ enum PauseReason: string
      */
     case Manual = 'manual';
 
+    /**
+     * Paused by a manager (somebody other than the owner): the owner cannot run, resume or copy it.
+     */
+    case ManagerPaused = 'manager_paused';
+
+    /**
+     * The panel requires a data-scope hook (`requireScopeHook()`) and has none.
+     */
+    case ScopeHookMissing = 'scope_hook_missing';
+
     public function label(): string
     {
         return __('filament-scheduled-reports::filament-scheduled-reports.pause_'.$this->value);

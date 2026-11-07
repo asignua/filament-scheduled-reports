@@ -93,6 +93,11 @@ class ScheduledReport extends Model
         return self::utc($this->next_run_at);
     }
 
+    public function isLockedByManager(): bool
+    {
+        return $this->status === ReportStatus::Paused && $this->paused_reason === PauseReason::ManagerPaused;
+    }
+
     public function isActive(): bool
     {
         return $this->status === ReportStatus::Active;

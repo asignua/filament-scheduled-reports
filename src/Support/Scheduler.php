@@ -11,6 +11,7 @@ use Asignua\FilamentScheduledReports\Models\ScheduledReportRun;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -56,6 +57,11 @@ final class Scheduler
                 return;
             }
 
+            // An owner at the concurrency limit waits: the report stays due and is picked up on a later tick.
+            if (self::busy($report)) {
+                return;
+            }
+
             $won = Claim::advance(DB::connection($report->getConnectionName()), $report->getTable(), $report->id, $expected, self::nextFor($report, $now));
 
             if ($won) {
@@ -73,6 +79,11 @@ final class Scheduler
      */
     public static function runNow(ScheduledReport $report): ?ScheduledReportRun
     {
+        // A manager's pause is not the owner's to lift, and a busy owner waits.
+        if ($report->isLockedByManager() || self::busy($report)) {
+            return null;
+        }
+
         $interval = max(0, (int) config('filament-scheduled-reports.manual_interval_seconds', 60));
         $now = now()->utc();
 
@@ -82,6 +93,27 @@ final class Scheduler
             ->update(['last_manual_run_at' => $now->format(self::FORMAT)]) === 1;
 
         return $won ? self::start($report, true) : null;
+    }
+
+    /**
+     * Whether the report's owner already has as many runs queued or running as `max_concurrent_per_owner` allows.
+     * A run older than the job's timeout plus a margin is a lost one (a killed worker) and does not hold the slot.
+     */
+    public static function busy(ScheduledReport $report): bool
+    {
+        $max = Limits::maxConcurrent();
+
+        if ($max === 0) {
+            return false;
+        }
+
+        $since = now()->subSeconds(max(30, (int) config('filament-scheduled-reports.timeout', 600)) + 120);
+
+        return ScheduledReportRun::query()
+            ->whereIn('status', [RunStatus::Queued->value, RunStatus::Running->value])
+            ->where('created_at', '>=', $since)
+            ->whereIn('scheduled_report_id', ScheduledReport::query()->where('guard', $report->guard)->where('owner_id', $report->owner_id)->select('id'))
+            ->count() >= $max;
     }
 
     private static function start(ScheduledReport $report, bool $manual): ScheduledReportRun
@@ -96,7 +128,8 @@ final class Scheduler
         try {
             RunScheduledReportJob::dispatch($report->id, $run->id);
         } catch (Throwable $exception) {
-            $run->update(['status' => RunStatus::Failed, 'reason' => mb_substr($exception->getMessage(), 0, 500), 'finished_at' => now()->utc()->format(self::FORMAT)]);
+            Log::error("filament-scheduled-reports: could not queue run {$run->id} of report {$report->id}: ".$exception->getMessage(), ['exception' => $exception]);
+            $run->update(['status' => RunStatus::Failed, 'reason' => ReportRunner::reasonFor($exception), 'finished_at' => now()->utc()->format(self::FORMAT)]);
 
             throw $exception;
         }

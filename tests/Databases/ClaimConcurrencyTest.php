@@ -116,6 +116,37 @@ class ClaimConcurrencyTest extends TestCase
         $this->assertSame(1, ScheduledReport::query()->count());
     }
 
+    public function test_simultaneous_unsubscribes_do_not_bring_each_other_back(): void
+    {
+        $users = \Workbench\App\Models\User::factory()->count(8)->create();
+        $report = $this->makeReport(['recipients' => $users->map(fn ($user): array => ['type' => 'user', 'id' => (string) $user->id])->all()]);
+        $barrier = sys_get_temp_dir().'/sr-barrier-'.bin2hex(random_bytes(6));
+        $env = [
+            ...getenv(),
+            'DB_CONNECTION' => (string) getenv('SR_DB'),
+            'DB_HOST' => (string) getenv('SR_DB_HOST'),
+            'DB_PORT' => (string) getenv('SR_DB_PORT'),
+            'DB_DATABASE' => (string) getenv('SR_DB_NAME'),
+            'DB_USERNAME' => (string) getenv('SR_DB_USER'),
+            'DB_PASSWORD' => (string) getenv('SR_DB_PASSWORD'),
+            'APP_KEY' => 'base64:'.base64_encode(str_repeat('a', 32)),
+            'CACHE_STORE' => 'array',
+            'SESSION_DRIVER' => 'array',
+        ];
+        $processes = [];
+
+        foreach ($users as $user) {
+            $processes[] = $this->start([PHP_BINARY, __DIR__.'/../../vendor/bin/testbench', 'workbench:unsubscribe', $report->ulid, 'u-'.$user->id, $barrier], $env);
+        }
+
+        usleep(2_500_000);
+        touch($barrier);
+        $outputs = array_map(fn (array $process): string => $this->finish($process), $processes);
+        @unlink($barrier);
+
+        $this->assertSame([], $report->refresh()->recipients, 'A lost update brought somebody back: '.implode(' | ', $outputs));
+    }
+
     /**
      * @param list<string>               $command
      * @param array<string, string>|null $env

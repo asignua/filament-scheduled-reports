@@ -8,6 +8,7 @@ use Asignua\FilamentScheduledReports\Enums\PauseReason;
 use Asignua\FilamentScheduledReports\Enums\ReportStatus;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -52,28 +53,32 @@ final class Unsubscribe
      */
     public static function apply(string $ulid, string $key): bool
     {
-        $report = ScheduledReport::query()->where('ulid', $ulid)->first();
+        // Read, change and write under a row lock: two people unsubscribing at the same moment (a mail scanner and
+        // a click, or two recipients of one send) would otherwise each write the list they read and bring one back.
+        return DB::transaction(static function () use ($ulid, $key): bool {
+            $report = ScheduledReport::query()->where('ulid', $ulid)->lockForUpdate()->first();
 
-        if ($report === null) {
-            return false;
-        }
+            if ($report === null) {
+                return false;
+            }
 
-        $kept = array_values(array_filter($report->recipients, static fn (array $recipient): bool => Recipients::key($recipient) !== $key));
+            $kept = array_values(array_filter($report->recipients, static fn (array $recipient): bool => Recipients::key($recipient) !== $key));
 
-        if (count($kept) === count($report->recipients)) {
-            return false;
-        }
+            if (count($kept) === count($report->recipients)) {
+                return false;
+            }
 
-        $report->recipients = $kept;
+            $report->recipients = $kept;
 
-        if ($kept === []) {
-            $report->status = ReportStatus::Paused;
-            $report->paused_reason = PauseReason::NoRecipients;
-            $report->next_run_at = null;
-        }
+            if ($kept === []) {
+                $report->status = ReportStatus::Paused;
+                $report->paused_reason = PauseReason::NoRecipients;
+                $report->next_run_at = null;
+            }
 
-        $report->save();
+            $report->save();
 
-        return true;
+            return true;
+        });
     }
 }

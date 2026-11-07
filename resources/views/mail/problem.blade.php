@@ -1,7 +1,8 @@
+@use('Asignua\FilamentScheduledReports\Support\Markdown')
 <x-mail::message>
-# {{ $title }}
+# {{ Markdown::escape($title) }}
 
-**{{ $reportName }}**
+**{{ Markdown::escape($reportName) }}**
 
-{{ $detail }}
+{{ Markdown::escape($detail) }}
 </x-mail::message>

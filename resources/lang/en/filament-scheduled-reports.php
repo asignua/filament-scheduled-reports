@@ -83,4 +83,7 @@ return [
     'unsubscribe_question' => 'Stop receiving this scheduled report?',
     'unsubscribe_button' => 'Unsubscribe',
     'unsubscribe_done' => 'Done. You will not receive this report any more.',
+    'limit_reached' => 'Limit reached: this report would exceed the number of reports or recipients allowed. Delete a report or remove a recipient.',
+    'pause_manager_paused' => 'paused by a manager',
+    'pause_scope_hook_missing' => 'the panel requires a data-scope hook and none is set',
 ];
