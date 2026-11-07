@@ -7,11 +7,14 @@ namespace Workbench\App\Filament\Resources\Orders;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Asignua\FilamentXlsxExport\ColumnFormat;
 use Closure;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Workbench\App\Enums\OrderStatus;
 use Workbench\App\Filament\Resources\Orders\Pages\ListOrders;
 use Workbench\App\Models\Order;
@@ -37,6 +40,10 @@ class OrderResource extends Resource
                 SelectFilter::make('status')->options(OrderStatus::class),
                 // A filter whose state is a related record's key: the query goes through whereHas.
                 SelectFilter::make('customer')->relationship('customer', 'name'),
+                // A custom-form filter with no indicator of its own: the table applies it and says nothing about it.
+                Filter::make('big')
+                    ->schema([TextInput::make('min')])
+                    ->query(fn (Builder $query, array $data): Builder => filled($data['min'] ?? null) ? $query->where('amount', '>=', $data['min']) : $query),
             ]);
     }
 

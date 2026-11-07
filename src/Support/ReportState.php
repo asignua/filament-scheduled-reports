@@ -106,13 +106,42 @@ final class ReportState
             $livewire->getTable()->getFilterIndicators(),
         );
 
+        // A filter with a value but no indicator (a custom-form filter without `indicateUsing()`) is still applied by the
+        // table and by the report: it is counted, so the list is never shorter than the truth.
+        $hidden = self::unindicatedFilters($livewire);
+
+        if ($hidden > 0) {
+            $lines[] = __('filament-scheduled-reports::filament-scheduled-reports.summary_more_filters', ['count' => $hidden]);
+        }
+
         $sort = self::read($livewire, 'tableSort');
 
         if (is_string($sort) && $sort !== '') {
-            $lines[] = __('filament-scheduled-reports::filament-scheduled-reports.summary_sort', ['sort' => str_replace(':', ' ', (string) $sort)]);
+            [$column, $direction] = array_pad(explode(':', $sort, 2), 2, 'asc');
+            $label = $livewire->getTable()->getColumn($column)?->getLabel();
+            $label = $label instanceof Htmlable ? strip_tags($label->toHtml()) : (is_string($label) && $label !== '' ? $label : $column);
+            $lines[] = __('filament-scheduled-reports::filament-scheduled-reports.summary_sort', [
+                'column' => $label,
+                'direction' => __('filament-scheduled-reports::filament-scheduled-reports.'.(strtolower($direction) === 'desc' ? 'sort_desc' : 'sort_asc')),
+            ]);
         }
 
         return array_values(array_filter($lines, static fn (string $line): bool => $line !== ''));
+    }
+
+    private static function unindicatedFilters(HasTable $livewire): int
+    {
+        $state = self::read($livewire, 'tableFilters');
+        $state = is_array($state) ? $state : [];
+        $count = 0;
+
+        foreach ($livewire->getTable()->getFilters() as $name => $filter) {
+            if (!self::blank($state[$name] ?? null) && $filter->getIndicators() === []) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private static function read(object $livewire, string $property): mixed

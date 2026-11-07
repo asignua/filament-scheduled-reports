@@ -24,6 +24,7 @@ class ReportMail extends Mailable implements ShouldQueue
 
     /**
      * @param list<string> $summary
+     * @param list<string> $notes   codes the recipient should know about (a saved column that is gone), shown as words
      */
     public function __construct(
         public readonly string $reportName,
@@ -35,6 +36,7 @@ class ReportMail extends Mailable implements ShouldQueue
         public readonly string $disk,
         public readonly string $path,
         public readonly ?string $link = null,
+        public readonly array $notes = [],
     ) {
         $connection = config('filament-scheduled-reports.mail_connection');
         $queue = config('filament-scheduled-reports.mail_queue');

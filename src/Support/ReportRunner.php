@@ -7,6 +7,7 @@ namespace Asignua\FilamentScheduledReports\Support;
 use Asignua\FilamentScheduledReports\Enums\PauseReason;
 use Asignua\FilamentScheduledReports\Enums\ReportStatus;
 use Asignua\FilamentScheduledReports\Enums\RunStatus;
+use Asignua\FilamentScheduledReports\Mail\ProblemMail;
 use Asignua\FilamentScheduledReports\Mail\ReportMail;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\Models\ScheduledReportRun;
@@ -255,9 +256,12 @@ final class ReportRunner
         $ownerKey = Recipients::key(Recipients::onlyOwner($owner)[0]);
         $send = $resolved['send'];
 
+        $told = [];
+
         if ($oversize) {
             // The download link needs a sign-in as the owner, so it is only useful to the owner; everybody
-            // else is named in the history instead of getting a link that cannot work (or a file that is too big).
+            // else is named in the history, and told in a short mail, instead of getting a link that cannot work
+            // (or a file that is too big).
             $ownerEntry = self::ownerEntry($owner, $ownerKey);
             $others = array_filter($send, static fn (array $entry): bool => $entry['key'] !== $ownerKey);
 
@@ -265,6 +269,7 @@ final class ReportRunner
                 $warnings[] = 'oversize_not_sent:'.count($others);
             }
 
+            $told = array_values($others);
             $send = $ownerEntry === null ? [] : [$ownerEntry];
         }
 
@@ -275,10 +280,21 @@ final class ReportRunner
             return;
         }
 
+        foreach ($told as $entry) {
+            Mail::to($entry['email'])->locale($report->locale)->queue(new ProblemMail(
+                $report->name,
+                __('filament-scheduled-reports::filament-scheduled-reports.mail_oversize_title', ['name' => $report->name]),
+                __('filament-scheduled-reports::filament-scheduled-reports.mail_oversize_body', ['name' => $report->name, 'size' => number_format($size / 1048576, 1), 'limit' => number_format($limit / 1048576), 'owner' => Recipients::name($owner)]),
+                Unsubscribe::url($report, $entry['key']),
+            ));
+        }
+
+        $notes = array_values(array_filter($warnings, static fn (string $warning): bool => str_starts_with($warning, 'columns_removed:')));
+
         foreach ($send as $entry) {
             $link = $oversize ? QueuedExports::url($id, $report->url_root, max(1, (int) config('filament-scheduled-reports.file_retention_hours', 168))) : null;
 
-            Mail::to($entry['email'])->queue(new ReportMail(
+            Mail::to($entry['email'])->locale($report->locale)->queue(new ReportMail(
                 $report->name,
                 $entry['name'],
                 $result['file_name'],
@@ -288,6 +304,7 @@ final class ReportRunner
                 $diskName,
                 QueuedExports::filePath($id),
                 $link,
+                $notes,
             ));
         }
 
@@ -349,7 +366,7 @@ final class ReportRunner
         // Somebody who lost access is not written to (the admin sees the pause in the resource); everybody
         // else is, because a report that stops quietly is the failure this plugin exists to prevent.
         if ($notify !== null) {
-            Notifier::tell($notify, $report, __('filament-scheduled-reports::filament-scheduled-reports.notify_paused', ['reason' => $reason->label()]), __('filament-scheduled-reports::filament-scheduled-reports.notify_paused_detail', ['detail' => $detail]));
+            Notifier::tell($notify, $report, __('filament-scheduled-reports::filament-scheduled-reports.notify_paused', ['reason' => $reason->label()]), __('filament-scheduled-reports::filament-scheduled-reports.notify_paused_detail', ['detail' => Reasons::text($reason->value.':'.$detail)]));
         }
     }
 
@@ -365,7 +382,7 @@ final class ReportRunner
         }
 
         if ($status === RunStatus::TooLarge) {
-            Notifier::tell($notify, $report, __('filament-scheduled-reports::filament-scheduled-reports.notify_too_large'), $reason);
+            Notifier::tell($notify, $report, __('filament-scheduled-reports::filament-scheduled-reports.notify_too_large'), Reasons::text($reason));
         }
 
         if ($paused) {

@@ -23,6 +23,7 @@ class ProblemMail extends Mailable implements ShouldQueue
         public readonly string $reportName,
         public readonly string $title,
         public readonly string $detail,
+        public readonly ?string $unsubscribeUrl = null,
     ) {
         $connection = config('filament-scheduled-reports.mail_connection');
         $queue = config('filament-scheduled-reports.mail_queue');
