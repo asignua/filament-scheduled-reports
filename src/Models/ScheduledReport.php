@@ -54,6 +54,11 @@ class ScheduledReport extends Model
         static::creating(function (self $report): void {
             $report->ulid ??= strtolower((string) Str::ulid());
         });
+
+        // Not left to the foreign key: SQLite (and some hosts) run without constraint enforcement.
+        static::deleting(function (self $report): void {
+            $report->runs()->delete();
+        });
     }
 
     protected function casts(): array

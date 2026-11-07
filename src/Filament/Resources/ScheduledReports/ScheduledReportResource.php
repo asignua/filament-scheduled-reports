@@ -168,7 +168,7 @@ class ScheduledReportResource extends Resource
                         ->label(__($lang.'run_now'))
                         ->icon(Heroicon::OutlinedPlay)
                         ->visible(fn (ScheduledReport $record): bool => self::owns($record))
-                        ->action(function (ScheduledReport $record): void {
+                        ->action(function (ScheduledReport $record) use ($lang): void {
                             $run = Scheduler::runNow($record);
 
                             Notification::make()
