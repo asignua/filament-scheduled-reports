@@ -8,11 +8,8 @@ use Asignua\FilamentScheduledReports\Enums\Frequency;
 use Asignua\FilamentScheduledReports\Enums\ReportStatus;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\Models\ScheduledReportRun;
-use Asignua\FilamentXlsxExport\Support\QueuedExports;
-use OpenSpout\Reader\XLSX\Reader;
-use Workbench\App\Models\Customer;
-use Workbench\App\Models\Order;
 use Asignua\FilamentScheduledReports\ScheduledReportsServiceProvider;
+use Asignua\FilamentXlsxExport\Support\QueuedExports;
 use Asignua\FilamentXlsxExport\XlsxExportServiceProvider;
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
@@ -30,9 +27,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\LivewireServiceProvider;
+use OpenSpout\Reader\XLSX\Reader;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Workbench\App\Filament\Resources\Orders\Pages\ListOrders;
+use Workbench\App\Models\Customer;
+use Workbench\App\Models\Order;
 use Workbench\App\Models\User;
 use Workbench\App\Providers\AdminPanelProvider;
 use Workbench\App\Providers\TenantPanelProvider;
@@ -49,6 +49,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         Storage::fake('local');
+
         if ($this->defineScheduleGate) {
             Gate::define('scheduleReport', fn (User $user, ?string $page = null): bool => true);
         }
@@ -143,7 +144,7 @@ abstract class TestCase extends Orchestra
     {
         $this->assertNotNull($run->file_id, 'The run stored no file.');
 
-        $reader = new Reader();
+        $reader = new Reader;
         $reader->open(Storage::disk('local')->path(QueuedExports::filePath($run->file_id)));
         $rows = [];
 

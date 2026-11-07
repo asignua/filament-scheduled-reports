@@ -15,16 +15,18 @@ use Asignua\FilamentXlsxExport\Support\ExportTooLarge;
 use Asignua\FilamentXlsxExport\Support\QueuedExports;
 use Filament\Facades\Filament;
 use Filament\Panel;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Livewire\Component;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Throwable;
 
 use function Livewire\trigger;
+
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Throwable;
 
 /**
  * Builds and delivers one run, as the report's owner.
@@ -160,7 +162,7 @@ final class ReportRunner
 
         $warnings = [];
         $data = is_array($report->state['export'] ?? null) ? $report->state['export'] : [];
-        $available = ExportForm::columnOptions($action, $component, Schema::make($component));
+        $available = ExportForm::columnOptions($action, Schema::make($component instanceof HasSchemas ? $component : null));
 
         if ($available !== null && is_array($data['columns'] ?? null)) {
             $kept = array_values(array_filter($data['columns'], static fn (mixed $column): bool => is_string($column) && array_key_exists($column, $available)));
@@ -292,8 +294,10 @@ final class ReportRunner
      * page build its table.
      *
      * @param class-string<Component&HasTable> $page
+     *
+     * @return Component&HasTable
      */
-    private static function fresh(string $page): HasTable
+    private static function fresh(string $page): Component
     {
         $component = app('livewire')->new($page);
 
@@ -388,7 +392,7 @@ final class ReportRunner
 
     private static function owner(ScheduledReport $report): ?Authenticatable
     {
-        return \Illuminate\Support\Facades\Auth::guard($report->guard)->getProvider()->retrieveById($report->owner_id);
+        return Owners::find($report->guard, $report->owner_id);
     }
 
     private static function stamp(): string

@@ -111,7 +111,5 @@ class ScheduledReportsPlugin implements Plugin
         $panel->resources([ScheduledReportResource::class]);
     }
 
-    public function boot(Panel $panel): void
-    {
-    }
+    public function boot(Panel $panel): void {}
 }

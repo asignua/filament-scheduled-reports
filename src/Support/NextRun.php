@@ -37,7 +37,7 @@ final class NextRun
         $local = $afterUtc->setTimezone($zone);
 
         // A plain calendar walk: dates are added in UTC so that a DST change cannot skip or repeat a day.
-        $date = CarbonImmutable::create($local->year, $local->month, $local->day, 0, 0, 0, 'UTC');
+        $date = CarbonImmutable::create($local->year, $local->month, $local->day, 0, 0, 0, 'UTC') ?? throw new \LogicException('Cannot build the start date.');
 
         for ($i = 0; $i <= self::HORIZON_DAYS; $i++) {
             $day = $date->addDays($i);

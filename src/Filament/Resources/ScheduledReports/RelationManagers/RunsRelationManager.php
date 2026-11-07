@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\RelationManagers;
 
-use Asignua\FilamentScheduledReports\Enums\RunStatus;
 use Asignua\FilamentScheduledReports\Models\ScheduledReportRun;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;

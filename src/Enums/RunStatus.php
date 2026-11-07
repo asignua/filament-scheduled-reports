@@ -10,14 +10,21 @@ enum RunStatus: string
     case Running = 'running';
     case Success = 'success';
 
-    /** The table was empty and the report asked not to send an empty file. */
+    /**
+     * The table was empty and the report asked not to send an empty file.
+     */
     case Skipped = 'skipped';
+
     case Failed = 'failed';
 
-    /** The table grew past the export's row cap. */
+    /**
+     * The table grew past the export's row cap.
+     */
     case TooLarge = 'too_large';
 
-    /** The report was paused instead of running (lost access, target gone, ...). */
+    /**
+     * The report was paused instead of running (lost access, target gone, ...).
+     */
     case Paused = 'paused';
 
     public function label(): string

@@ -7,15 +7,21 @@ namespace Asignua\FilamentScheduledReports\Tests\Feature;
 use Asignua\FilamentScheduledReports\Tests\TestCase;
 use Filament\Tables\Contracts\HasTable;
 use Livewire\Livewire;
+
+use function Livewire\trigger;
+
 use Workbench\App\Filament\Resources\Orders\Pages\ListOrders;
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Order;
 
-use function Livewire\trigger;
-
-class SpikeTest extends TestCase
+/**
+ * The spike that decided the design: a page component made fresh, with no request and no snapshot, from stored
+ * plain state (filters, search, sort) builds the same query the mounted table builds, including a filter whose
+ * state is a related record's key. The worker test proves it in a real separate process.
+ */
+class FreshComponentTest extends TestCase
 {
-    public function test_fresh_component_builds_the_tables_query(): void
+    public function test_a_fresh_component_builds_the_same_query_as_the_mounted_table(): void
     {
         $acme = Customer::query()->create(['name' => 'Acme']);
         $other = Customer::query()->create(['name' => 'Other']);
@@ -43,6 +49,5 @@ class SpikeTest extends TestCase
 
         $this->assertInstanceOf(HasTable::class, $component);
         $this->assertSame($expected, $component->getFilteredSortedTableQuery()->pluck('name')->all());
-        dump($component->getFilteredSortedTableQuery()->toRawSql());
     }
 }

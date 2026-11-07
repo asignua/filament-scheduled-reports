@@ -46,7 +46,7 @@ final class ScheduleFields
             Select::make('day_of_month')
                 ->label(__($lang.'day_of_month'))
                 ->helperText(__($lang.'day_of_month_hint'))
-                ->options(array_combine(range(1, 31), range(1, 31)))
+                ->options(array_combine(range(1, 31), array_map('strval', range(1, 31))))
                 ->visible(static fn (Get $get): bool => $get('frequency') === Frequency::Monthly->value)
                 ->required(static fn (Get $get): bool => $get('frequency') === Frequency::Monthly->value)
                 ->native(false),
@@ -146,7 +146,9 @@ final class ScheduleFields
         $days = [];
 
         for ($day = 1; $day <= 7; $day++) {
-            $days[$day] = Carbon::now()->startOfWeek()->addDays($day - 1)->locale(app()->getLocale())->isoFormat('dddd');
+            $date = Carbon::now()->startOfWeek()->addDays($day - 1);
+            $date->locale(app()->getLocale());
+            $days[$day] = $date->isoFormat('dddd');
         }
 
         return $days;

@@ -62,7 +62,7 @@ class ScheduledReportsServiceProvider extends PackageServiceProvider
 
             // The signed URL is the credential, and a mail client's one-click POST cannot carry a CSRF token.
             Route::post($path, [UnsubscribeController::class, 'store'])
-                ->withoutMiddleware(array_values(array_filter([VerifyCsrfToken::class, class_exists(PreventRequestForgery::class) ? PreventRequestForgery::class : null])))
+                ->withoutMiddleware(array_filter([VerifyCsrfToken::class, class_exists(PreventRequestForgery::class) ? PreventRequestForgery::class : null]))
                 ->name(Unsubscribe::ROUTE_CONFIRM);
         });
     }

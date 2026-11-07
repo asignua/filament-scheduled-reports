@@ -12,6 +12,7 @@ use Asignua\FilamentScheduledReports\Filament\Resources\ScheduledReports\Relatio
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
 use Asignua\FilamentScheduledReports\Support\Access;
+use Asignua\FilamentScheduledReports\Support\Owners;
 use Asignua\FilamentScheduledReports\Support\ScheduleFields;
 use Asignua\FilamentScheduledReports\Support\Scheduler;
 use Filament\Actions\Action;
@@ -103,7 +104,7 @@ class ScheduledReportResource extends Resource
     }
 
     /**
-     * @return Builder<ScheduledReport>
+     * @return Builder<Model>
      */
     public static function getEloquentQuery(): Builder
     {
@@ -128,7 +129,7 @@ class ScheduledReportResource extends Resource
 
         return $schema->components([
             Text::make(fn (?ScheduledReport $record): string => __('filament-scheduled-reports::filament-scheduled-reports.will_send')),
-            UnorderedList::make(fn (?ScheduledReport $record): array => array_map(static fn (string $line): Text => Text::make($line), $record?->summary ?? [])),
+            UnorderedList::make(fn (?ScheduledReport $record): array => array_map(static fn (string $line): Text => Text::make($line), $record->summary ?? [])),
             ...($user === null ? [] : ScheduleFields::make($plugin, $user)),
         ]);
     }
@@ -143,7 +144,7 @@ class ScheduledReportResource extends Resource
                 TextColumn::make('owner_id')
                     ->label(__($lang.'owner'))
                     ->visible(fn (): bool => Access::canManageAll(self::user()))
-                    ->state(fn (ScheduledReport $record): string => (string) (Auth::guard($record->guard)->getProvider()->retrieveById($record->owner_id)?->getAttribute('name') ?? '#'.$record->owner_id)),
+                    ->state(fn (ScheduledReport $record): string => (string) (Owners::find($record->guard, $record->owner_id)?->getAttribute('name') ?? '#'.$record->owner_id)),
                 TextColumn::make('frequency')
                     ->label(__($lang.'frequency'))
                     ->state(fn (ScheduledReport $record): string => $record->frequency->label().' · '.$record->time.' · '.$record->timezone),

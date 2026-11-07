@@ -33,7 +33,7 @@ final class ExportForm
 
         $built = $action->getSchema($schema);
 
-        return $built instanceof Schema ? array_values($built->getComponents()) : [];
+        return $built instanceof Schema ? array_values(array_filter($built->getComponents(), static fn (mixed $component): bool => $component instanceof Component)) : [];
     }
 
     /**
@@ -41,7 +41,7 @@ final class ExportForm
      *
      * @return array<string, string>|null
      */
-    public static function columnOptions(object $action, HasTable $livewire, Schema $schema): ?array
+    public static function columnOptions(object $action, Schema $schema): ?array
     {
         foreach (self::components($action, $schema) as $component) {
             if ($component instanceof CheckboxList && $component->getName() === 'columns') {

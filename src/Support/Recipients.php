@@ -7,11 +7,11 @@ namespace Asignua\FilamentScheduledReports\Support;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Asignua\FilamentScheduledReports\ScheduledReportsPlugin;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Turns the stored recipient list into the people a mail may go to right now.
@@ -37,7 +37,7 @@ final class Recipients
      */
     public static function key(array $recipient): string
     {
-        if (($recipient['type'] ?? '') === 'user') {
+        if ($recipient['type'] === 'user') {
             return 'u-'.preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($recipient['id'] ?? ''));
         }
 
@@ -49,7 +49,6 @@ final class Recipients
      */
     public static function resolve(ScheduledReport $report, Authenticatable $owner, ?ScheduledReportsPlugin $plugin, ?Panel $panel): array
     {
-        $provider = Auth::guard($report->guard)->getProvider();
         $ownerId = (string) $owner->getAuthIdentifier();
         $allowed = array_map('strval', array_keys($plugin?->recipientOptions($owner) ?? []));
         $send = [];
@@ -58,9 +57,9 @@ final class Recipients
         foreach ($report->recipients as $recipient) {
             $key = self::key($recipient);
 
-            if (($recipient['type'] ?? '') === 'user') {
+            if ($recipient['type'] === 'user') {
                 $id = (string) ($recipient['id'] ?? '');
-                $user = $id === $ownerId ? $owner : self::user($provider, $id);
+                $user = $id === $ownerId ? $owner : Owners::find($report->guard, $id);
 
                 if ($user === null || ($id !== $ownerId && !in_array($id, $allowed, true))
                     || ($user instanceof FilamentUser && $panel !== null && !$user->canAccessPanel($panel))) {
@@ -105,17 +104,14 @@ final class Recipients
 
     public static function name(Authenticatable $user): string
     {
-        if ($user instanceof \Filament\Models\Contracts\HasName) {
-            return $user->getFilamentName();
+        if ($user instanceof HasName) {
+            $name = $user->getFilamentName();
+
+            return $name instanceof Htmlable ? strip_tags($name->toHtml()) : $name;
         }
 
         $name = $user instanceof Model ? $user->getAttribute('name') : null;
 
         return is_string($name) && $name !== '' ? $name : (string) self::email($user);
-    }
-
-    private static function user(UserProvider $provider, string $id): ?Authenticatable
-    {
-        return $provider->retrieveById($id);
     }
 }

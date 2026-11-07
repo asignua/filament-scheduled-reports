@@ -6,6 +6,7 @@ namespace Asignua\FilamentScheduledReports\Support;
 
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Indicator;
+use Illuminate\Contracts\Support\Htmlable;
 
 /**
  * What of a table's state is saved with a report, and how it is put back on a freshly built page.
@@ -24,14 +25,17 @@ final class ReportState
      */
     public static function capture(HasTable $livewire): array
     {
-        $tab = property_exists($livewire, 'activeTab') && (is_string($livewire->activeTab) || is_int($livewire->activeTab)) ? (string) $livewire->activeTab : null;
+        $active = self::read($livewire, 'activeTab');
+        $tab = is_string($active) || is_int($active) ? (string) $active : null;
+        $search = self::read($livewire, 'tableSearch');
+        $sort = self::read($livewire, 'tableSort');
 
         return [
             'version' => self::VERSION,
-            'filters' => self::plain($livewire->tableFilters ?? []),
-            'search' => filled($livewire->tableSearch ?? null) ? (string) $livewire->tableSearch : null,
-            'column_searches' => self::plain($livewire->tableColumnSearches ?? []),
-            'sort' => filled($livewire->tableSort ?? null) ? (string) $livewire->tableSort : null,
+            'filters' => self::plain(self::read($livewire, 'tableFilters') ?? []),
+            'search' => is_string($search) && $search !== '' ? $search : null,
+            'column_searches' => self::plain(self::read($livewire, 'tableColumnSearches') ?? []),
+            'sort' => is_string($sort) && $sort !== '' ? $sort : null,
             'tab' => $tab,
         ];
     }
@@ -64,13 +68,23 @@ final class ReportState
             }
         }
 
-        $component->tableFilters = $filters;
-        $component->tableSearch = is_string($state['search'] ?? null) ? $state['search'] : '';
-        $component->tableColumnSearches = is_array($state['column_searches'] ?? null) ? $state['column_searches'] : [];
-        $component->tableSort = is_string($state['sort'] ?? null) ? $state['sort'] : null;
+        // Plain public properties of Filament's table trait, the same ones a browser would have set.
+        $values = [
+            'tableFilters' => $filters,
+            'tableSearch' => is_string($state['search'] ?? null) ? $state['search'] : '',
+            'tableColumnSearches' => is_array($state['column_searches'] ?? null) ? $state['column_searches'] : [],
+            'tableSort' => is_string($state['sort'] ?? null) ? $state['sort'] : null,
+        ];
 
         if (is_string($tab) && property_exists($component, 'activeTab')) {
-            $component->activeTab = $tab;
+            $values['activeTab'] = $tab;
+        }
+
+        /** @var object $target the component, seen as a bag of public Livewire properties */
+        $target = $component;
+
+        foreach ($values as $property => $value) {
+            $target->{$property} = $value;
         }
 
         return null;
@@ -85,17 +99,26 @@ final class ReportState
     public static function summary(HasTable $livewire): array
     {
         $lines = array_map(
-            static fn (Indicator $indicator): string => trim(strip_tags((string) $indicator->getLabel())),
+            static function (Indicator $indicator): string {
+                $label = $indicator->getLabel();
+
+                return trim(strip_tags($label instanceof Htmlable ? $label->toHtml() : (string) $label));
+            },
             $livewire->getTable()->getFilterIndicators(),
         );
 
-        $sort = $livewire->tableSort ?? null;
+        $sort = self::read($livewire, 'tableSort');
 
-        if (filled($sort)) {
+        if (is_string($sort) && $sort !== '') {
             $lines[] = __('filament-scheduled-reports::filament-scheduled-reports.summary_sort', ['sort' => str_replace(':', ' ', (string) $sort)]);
         }
 
         return array_values(array_filter($lines, static fn (string $line): bool => $line !== ''));
+    }
+
+    private static function read(object $livewire, string $property): mixed
+    {
+        return property_exists($livewire, $property) ? $livewire->{$property} : null;
     }
 
     public static function blank(mixed $value): bool

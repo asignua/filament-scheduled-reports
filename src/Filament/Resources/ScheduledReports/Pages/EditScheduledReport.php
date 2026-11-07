@@ -32,11 +32,11 @@ class EditScheduledReport extends EditRecord
         }
 
         $data['recipients'] = array_values(array_map(
-            static fn (array $recipient): string => (string) $recipient['id'],
+            static fn (array $recipient): string => (string) ($recipient['id'] ?? ''),
             array_filter($report->recipients, static fn (array $recipient): bool => $recipient['type'] === 'user'),
         ));
         $data['external'] = array_values(array_map(
-            static fn (array $recipient): string => (string) $recipient['email'],
+            static fn (array $recipient): string => (string) ($recipient['email'] ?? ''),
             array_filter($report->recipients, static fn (array $recipient): bool => $recipient['type'] === 'email'),
         ));
         $data['frequency'] = $report->frequency->value;
