@@ -18,6 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Workbench\App\Filament\Pages\Outbox;
 use Workbench\App\Filament\Resources\Orders\OrderResource;
 use Workbench\App\Models\User;
 
@@ -32,6 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->databaseNotifications()
             ->resources([OrderResource::class])
+            ->pages([Outbox::class])
             ->plugin(
                 ScheduledReportsPlugin::make()
                     // Colleagues the owner may pick: every active user (a real app would narrow this to a team).

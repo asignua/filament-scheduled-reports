@@ -1,0 +1,17 @@
+{
+    "shots": [],
+    "covers": [
+        {
+            "html": "../../scripts/art/cover.html",
+            "out": "cover.jpg",
+            "query": {
+                "eyebrow": "Plugin for Filament 5",
+                "title": "Scheduled Reports",
+                "lead": "Send any table as an .xlsx on a schedule: saved filters, the owner's time zone, exactly once, only what the owner can see.",
+                "chips": "Weekly, daily, monthly|Atomic claim|Time zone aware|Unsubscribe link|History",
+                "shot": "../../filament-scheduled-reports/art/schedule.jpg",
+                "crop": "70,110,1300,1480"
+            }
+        }
+    ]
+}

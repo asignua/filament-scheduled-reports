@@ -79,6 +79,18 @@ class ScheduleActionTest extends TestCase
         $this->assertStringNotContainsString('snapshot', json_encode($report->state, JSON_THROW_ON_ERROR));
     }
 
+    public function test_the_columns_default_to_the_ones_the_table_shows(): void
+    {
+        $data = $this->form();
+        unset($data['export']);
+
+        Livewire::test(ListOrders::class)->callAction('scheduleReport', $data)->assertHasNoActionErrors();
+
+        $columns = ScheduledReport::query()->firstOrFail()->state['export']['columns'] ?? [];
+        $this->assertContains('name', $columns);
+        $this->assertContains('amount', $columns);
+    }
+
     public function test_the_stored_json_keeps_non_ascii_text_readable(): void
     {
         $this->seedOrders();

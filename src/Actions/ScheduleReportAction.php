@@ -22,12 +22,14 @@ use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\UnorderedList;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 /**
  * "Schedule report": a header action that saves the table as it is now (filters, search, sort, the
@@ -69,7 +71,7 @@ class ScheduleReportAction extends Action
 
         $this->visible(fn (mixed $livewire): bool => $this->mayBeUsedOn($livewire));
         $this->schema(fn (HasTable $livewire, Schema $schema): array => $this->scheduleSchema($livewire, $schema));
-        $this->fillForm(fn (HasTable $livewire): array => $this->defaults($livewire));
+        $this->fillForm(fn (HasTable $livewire): array => $this->defaults($livewire, Schema::make($livewire instanceof HasSchemas && $livewire instanceof Component ? $livewire : null)));
         $this->action(fn (array $data, HasTable $livewire) => $this->save($livewire, $data));
     }
 
@@ -100,8 +102,9 @@ class ScheduleReportAction extends Action
     /**
      * @return array<string, mixed>
      */
-    private function defaults(HasTable $livewire): array
+    private function defaults(HasTable $livewire, Schema $schema): array
     {
+        $export = ExportForm::action($livewire, $this->exportActionName);
         $user = $this->user();
         $timezone = $user !== null && method_exists($user, 'getAttribute') ? $user->getAttribute('timezone') : null;
         $timezone = is_string($timezone) && in_array($timezone, DateTimeZone::listIdentifiers(), true) ? $timezone : (string) config('app.timezone');
@@ -116,6 +119,7 @@ class ScheduleReportAction extends Action
             'recipients' => $user === null ? [] : [(string) $user->getAuthIdentifier()],
             'external' => [],
             'skip_empty' => false,
+            'export' => $export === null ? [] : ExportForm::defaults($export, $schema),
         ];
     }
 

@@ -86,6 +86,8 @@ abstract class TestCase extends Orchestra
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
         $app['config']->set('app.timezone', 'UTC');
         $app['config']->set('database.default', 'testing');
+        // Filament's notification mailbox takes a cache lock; a database cache store would need a table.
+        $app['config']->set('cache.default', 'array');
         $app['config']->set('queue.default', 'sync');
         $app['config']->set('mail.default', 'array');
         $app['config']->set('mail.from', ['address' => 'reports@example.test', 'name' => 'Reports']);

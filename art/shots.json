@@ -1,0 +1,43 @@
+{
+  "base": "http://host.docker.internal:8776",
+  "login": {"path": "/admin/login", "email": "admin@example.test", "password": "password"},
+  "shots": [
+    {
+      "path": "/admin/orders?filters[status][value]=shipped&search=a",
+      "out": "schedule.jpg", "theme": "light", "viewport": {"width": 1440, "height": 1500}, "waitFor": "table",
+      "actions": [
+        {"click": "button:has-text(\"Schedule report\")"},
+        {"waitFor": ".fi-modal-window"},
+        {"wait": 700},
+        {"shot": "schedule.jpg"},
+        {"click": ".fi-modal-footer button:has-text(\"Schedule\")"},
+        {"wait": 1800}
+      ]
+    },
+    {
+      "path": "/admin/scheduled-reports", "out": "list.jpg", "theme": "light", "waitFor": "table tbody tr",
+      "actions": [
+        {"click": "tbody tr .fi-dropdown-trigger button"},
+        {"click": ".fi-dropdown-panel >> text=Run now"},
+        {"wait": 2500},
+        {"eval": "location.reload()"},
+        {"wait": 1500}
+      ]
+    },
+    {"path": "/admin/outbox", "out": "mail.jpg", "theme": "light", "waitFor": ".outbox-message"},
+    {"path": "/admin/scheduled-reports/1/edit", "out": "history.jpg", "theme": "light", "viewport": {"width": 1440, "height": 1100}, "waitFor": "table tbody tr"},
+    {"path": "/admin/outbox", "theme": "light", "waitFor": ".outbox-unsubscribe",
+      "actions": [
+        {"click": ".outbox-unsubscribe"},
+        {"waitFor": "form button"},
+        {"shot": "unsubscribe.jpg"},
+        {"click": "form button"},
+        {"wait": 800},
+        {"shot": "unsubscribed.jpg"}
+      ]},
+    {"path": "/admin/scheduled-reports", "out": "paused.jpg", "theme": "light", "waitFor": "table tbody tr"},
+    {"path": "/admin/orders?filters[status][value]=shipped&search=a", "out": "schedule-dark.jpg", "theme": "dark", "viewport": {"width": 1440, "height": 1500}, "waitFor": "table",
+      "actions": [{"click": "button:has-text(\"Schedule report\")"}, {"waitFor": ".fi-modal-window"}, {"wait": 700}]},
+    {"path": "/admin/scheduled-reports", "out": "list-dark.jpg", "theme": "dark", "waitFor": "table tbody tr"}
+  ]
+}

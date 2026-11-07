@@ -80,11 +80,8 @@ final class ReportState
             $values['activeTab'] = $tab;
         }
 
-        /** @var object $target the component, seen as a bag of public Livewire properties */
-        $target = $component;
-
         foreach ($values as $property => $value) {
-            $target->{$property} = $value;
+            data_set($component, $property, $value);
         }
 
         return null;

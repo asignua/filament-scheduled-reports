@@ -37,6 +37,30 @@ final class ExportForm
     }
 
     /**
+     * The export modal's own defaults (the columns the table shows now), which a form filled by this
+     * plugin would otherwise replace with nothing.
+     *
+     * @return array<string, mixed>
+     */
+    public static function defaults(object $action, Schema $schema): array
+    {
+        $defaults = [];
+
+        foreach (self::components($action, $schema) as $component) {
+            if ($component instanceof \Filament\Forms\Components\Field) {
+                $name = $component->getName();
+                $state = $component->getDefaultState();
+
+                if ($state !== null) {
+                    $defaults[$name] = $state;
+                }
+            }
+        }
+
+        return $defaults;
+    }
+
+    /**
      * The columns the export can write now, by name, or null when the action has no column picker.
      *
      * @return array<string, string>|null

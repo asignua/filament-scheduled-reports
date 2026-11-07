@@ -21,6 +21,8 @@ class WorkbenchServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'workbench');
+
         // Both gates are denied until the application defines them; the workbench lets everybody schedule
         // and one address manage everything, which is what the browser walk-through shows.
         Gate::define('scheduleReport', fn (User $user, ?string $page = null): bool => true);
