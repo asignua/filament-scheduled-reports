@@ -2,6 +2,10 @@
 
 All notable changes to `asignua/filament-scheduled-reports` are documented here.
 
+## v1.0.1 - 2026-11-09
+
+- Security: on Filament 5.11.2+ the edit page opened for users the resource meant to refuse (a manager could open another person's report: the page asks `getEditAuthorizationResponse()` there, no longer `canEdit()`). The owner-only edit rule, and the view / delete / create rules, now live in the resource's `get…AuthorizationResponse()` methods, which `canX()` follows. HTTP tests cover the edit page for the owner, a manager and a stranger.
+
 ## v1.0.0 - 2026-11-09
 
 - «Schedule report» header action for tables with an `XlsxExportAction`: saves filters, search, sort and the export's columns, plus a schedule (daily, weekdays, day of the month, in the owner's time zone) and recipients. Exactly-once runs, owner-bound, mail with the file or a sign-in link, unsubscribe, history, pause, run now, duplicate, ten languages.

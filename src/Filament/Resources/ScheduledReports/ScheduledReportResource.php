@@ -29,6 +29,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -76,23 +77,32 @@ class ScheduledReportResource extends Resource
         return Access::canSchedule($user) || Access::canManageAll($user);
     }
 
-    public static function canCreate(): bool
+    /**
+     * The rules live in the `get…AuthorizationResponse()` methods: from Filament 5.11.2 the pages ask those, not `canX()`
+     * (which is `getXAuthorizationResponse()->allowed()` and so follows these by itself).
+     */
+    public static function getCreateAuthorizationResponse(): Response
     {
         // Reports are made from a table's own "Schedule report" button, where the filters are.
-        return false;
+        return Response::deny();
     }
 
-    public static function canEdit(Model $record): bool
+    public static function getEditAuthorizationResponse(Model $record): Response
     {
-        return $record instanceof ScheduledReport && self::owns($record);
+        return $record instanceof ScheduledReport && self::owns($record) ? Response::allow() : Response::deny();
     }
 
-    public static function canDelete(Model $record): bool
+    public static function getDeleteAuthorizationResponse(Model $record): Response
     {
-        return $record instanceof ScheduledReport && (self::owns($record) || Access::canManageAll(self::user()));
+        return self::ownsOrManages($record) ? Response::allow() : Response::deny();
     }
 
-    public static function canView(Model $record): bool
+    public static function getViewAuthorizationResponse(Model $record): Response
+    {
+        return self::ownsOrManages($record) ? Response::allow() : Response::deny();
+    }
+
+    private static function ownsOrManages(Model $record): bool
     {
         return $record instanceof ScheduledReport && (self::owns($record) || Access::canManageAll(self::user()));
     }
