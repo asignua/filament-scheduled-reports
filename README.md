@@ -5,6 +5,8 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/asignua/filament-scheduled-reports/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/asignua/filament-scheduled-reports/actions/workflows/tests.yml)
 [![License](https://img.shields.io/packagist/l/asignua/filament-scheduled-reports.svg?style=flat-square)](https://github.com/asignua/filament-scheduled-reports/blob/main/LICENSE.md)
 
+<img class="filament-hidden" src="https://raw.githubusercontent.com/asignua/filament-scheduled-reports/v1.0.0/art/cover.jpg" alt="Filament Scheduled Reports">
+
 > **Read this first: the worker does not run your panel's middleware.** A report is built in a queue worker, as the report's owner, with
 > no browser request behind it. The panel's middleware, the `ServingFilament` event and a second panel's `bootUsing()` **do not run there**.
 > Anything that narrows what a person sees in the browser through those (a tenant-like global scope, a «current branch» setting,
@@ -30,13 +32,13 @@ Export button would have produced.
 - A resource, **Scheduled reports**: your own (everybody's for `manageScheduledReports`), history of runs, pause / resume, run now, duplicate, delete. The filters are shown as text so you can see what will be sent.
 - Interface in 10 languages: de, en, es, fr, it, nl, pl, pt_BR, tr, uk (all but en and uk are machine translations: corrections welcome).
 
-![The schedule form](https://raw.githubusercontent.com/asignua/filament-scheduled-reports/main/art/schedule.jpg)
+![The schedule form](https://raw.githubusercontent.com/asignua/filament-scheduled-reports/v1.0.0/art/schedule.jpg)
 
-![The run's mail and the history](https://raw.githubusercontent.com/asignua/filament-scheduled-reports/main/art/history.jpg)
+![The run's mail and the history](https://raw.githubusercontent.com/asignua/filament-scheduled-reports/v1.0.0/art/history.jpg)
 
 ## Requirements
 
-PHP 8.3+, Laravel 12 or 13, Filament 5, `asignua/filament-xlsx-export` with the scoped-download API (the release after 1.1.0; installed with it), a working **queue worker** and the Laravel **scheduler** (`php artisan schedule:run` every minute), and a mail transport. Without a queue worker mail and runs are not sent: the queue is where they go.
+PHP 8.3+, Laravel 12 or 13, Filament 5, `asignua/filament-xlsx-export` ^1.2 (installed with it), a working **queue worker** and the Laravel **scheduler** (`php artisan schedule:run` every minute), and a mail transport. Without a queue worker mail and runs are not sent: the queue is where they go.
 
 ## Installation
 
