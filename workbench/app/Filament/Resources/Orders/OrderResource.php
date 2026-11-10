@@ -42,7 +42,7 @@ class OrderResource extends Resource
                 SelectFilter::make('customer')->relationship('customer', 'name'),
                 // A custom-form filter with no indicator of its own: the table applies it and says nothing about it.
                 Filter::make('big')
-                    ->schema([TextInput::make('min')])
+                    ->form([TextInput::make('min')])
                     ->query(fn (Builder $query, array $data): Builder => filled($data['min'] ?? null) ? $query->where('amount', '>=', $data['min']) : $query),
             ]);
     }
