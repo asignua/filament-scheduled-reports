@@ -8,6 +8,7 @@ use Asignua\FilamentScheduledReports\Enums\PauseReason;
 use Asignua\FilamentScheduledReports\Enums\ReportStatus;
 use Asignua\FilamentScheduledReports\Models\ScheduledReport;
 use Illuminate\Http\Request;
+use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
@@ -47,12 +48,11 @@ final class Unsubscribe
      */
     private static function useOrigin(?string $root): void
     {
-        /** @var object $url */
-        $url = app('url');
+        $url = app(UrlGenerator::class);
 
         // Laravel 12: useOrigin() does not exist yet. Dynamic names: static analysis only sees one of the two versions.
-        $method = method_exists($url, 'useOrigin') ? 'useOrigin' : 'forceRootUrl';
-        $url->{$method}($root); // @phpstan-ignore method.notFound
+        $method = version_compare(app()->version(), '13.0.0', '>=') ? 'useOrigin' : 'forceRootUrl';
+        $url->{$method}($root);
     }
 
     public static function valid(Request $request): bool
