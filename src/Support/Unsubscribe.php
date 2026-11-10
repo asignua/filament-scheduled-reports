@@ -30,16 +30,29 @@ final class Unsubscribe
         // A worker has no request, so URLs would be built from APP_URL; the link should point at the
         // domain the owner scheduled the report from.
         if ($hasRoot) {
-            URL::forceRootUrl($root);
+            self::useOrigin($root);
         }
 
         try {
             return URL::signedRoute(self::ROUTE, ['report' => $report->ulid, 'recipient' => $key]);
         } finally {
             if ($hasRoot) {
-                URL::forceRootUrl(null);
+                self::useOrigin(null);
             }
         }
+    }
+
+    /**
+     * Laravel 13 renamed forceRootUrl() to useOrigin() and deprecated the old name.
+     */
+    private static function useOrigin(?string $root): void
+    {
+        /** @var object $url */
+        $url = app('url');
+
+        // Laravel 12: useOrigin() does not exist yet. Dynamic names: static analysis only sees one of the two versions.
+        $method = method_exists($url, 'useOrigin') ? 'useOrigin' : 'forceRootUrl';
+        $url->{$method}($root); // @phpstan-ignore method.notFound
     }
 
     public static function valid(Request $request): bool

@@ -13,7 +13,6 @@ use Asignua\FilamentXlsxExport\Support\QueuedExports;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -68,7 +67,10 @@ class ScheduledReportsServiceProvider extends PackageServiceProvider
 
             // The signed URL is the credential, and a mail client's one-click POST cannot carry a CSRF token.
             Route::post($path, [UnsubscribeController::class, 'store'])
-                ->withoutMiddleware(array_filter([VerifyCsrfToken::class, class_exists(PreventRequestForgery::class) ? PreventRequestForgery::class : null]))
+                ->withoutMiddleware([
+                    // Laravel 13 renamed VerifyCsrfToken to PreventRequestForgery; the string is the Laravel 12 fallback.
+                    class_exists(PreventRequestForgery::class) ? PreventRequestForgery::class : 'Illuminate\Foundation\Http\Middleware\VerifyCsrfToken',
+                ])
                 ->name(Unsubscribe::ROUTE_CONFIRM);
         });
     }
