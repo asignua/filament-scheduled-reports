@@ -3,7 +3,9 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/asignua/filament-scheduled-reports.svg?style=flat-square)](https://packagist.org/packages/asignua/filament-scheduled-reports)
 [![Tests](https://img.shields.io/github/actions/workflow/status/asignua/filament-scheduled-reports/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/asignua/filament-scheduled-reports/actions/workflows/tests.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/asignua/filament-scheduled-reports.svg?style=flat-square)](https://packagist.org/packages/asignua/filament-scheduled-reports)
 [![License](https://img.shields.io/packagist/l/asignua/filament-scheduled-reports.svg?style=flat-square)](https://github.com/asignua/filament-scheduled-reports/blob/main/LICENSE.md)
+[![Plumb score](https://plumbphp.dev/badges/asignua/filament-scheduled-reports/composite.svg)](https://plumbphp.dev/asignua/filament-scheduled-reports)
 
 <img class="filament-hidden" src="https://raw.githubusercontent.com/asignua/filament-scheduled-reports/v1.0.0/art/cover.jpg" alt="Filament Scheduled Reports">
 
@@ -133,6 +135,10 @@ Pauses: `owner_lost_access` (inactive, deleted, no panel, gate or page access), 
 
 `vendor/bin/phpunit`. The race tests need real databases: `bash tests/Databases/run.sh` starts throwaway MariaDB 11.4 and PostgreSQL 16 containers and removes them. The workbench: `bash workbench/serve.sh` (seeded users in the script).
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## More plugins by asign
 
 - [XLSX Export](https://filamentphp.com/plugins/asign-xlsx-export) — typed `.xlsx` downloads of what is on the screen
@@ -142,6 +148,8 @@ Pauses: `owner_lost_access` (inactive, deleted, no panel, gate or page access), 
 - [Redirects](https://filamentphp.com/plugins/asign-redirects) — redirects and the 404 log
 
 All plugins: <https://filamentphp.com/plugins?q=asign>
+
+Catalogue of free and commercial plugins: <https://asign.tech/en/plugins>
 
 ## License
 
